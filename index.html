@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CRONOS – Planification & Gestion commerciale</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <!-- LOGIN VIEW -->
+  <section id="login-view" class="view">
+    <div class="login-card">
+      <img src="assets/logo.png" alt="CRONOS" class="login-logo" />
+      <h1>CRONOS</h1>
+      <p class="subtitle">Planification & Gestion commerciale – Sécurité</p>
+      <form id="login-form">
+        <label>Identifiant</label>
+        <input id="login-username" type="text" placeholder="Identifiant" required />
+        <label>Mot de passe</label>
+        <input id="login-password" type="password" placeholder="Mot de passe" required />
+        <button type="submit" class="btn-primary">Connexion</button>
+        <p class="hint">Comptes de démonstration : <strong>admin/admin</strong> (administrateur) • <strong>agence/agence</strong> (profil agence)</p>
+      </form>
+    </div>
+  </section>
+
+  <!-- APP VIEW -->
+  <section id="app-view" class="view hidden">
+    <header class="topbar">
+      <div class="brand">
+        <img src="assets/logo.png" alt="CRONOS" />
+        <span>CRONOS</span>
+      </div>
+      <div class="userbox">
+        <span id="user-info"></span>
+        <button id="logout-btn" class="btn-ghost">Déconnexion</button>
+      </div>
+    </header>
+
+    <div class="app-shell">
+      <nav id="sidebar" class="sidebar">
+        <a href="#/planifications" data-route="/planifications" class="nav-link">
+          📅 Planifications
+        </a>
+        <a href="#/agents" data-route="/agents" class="nav-link">
+          👤 Agents
+        </a>
+        <a href="#/commercial" data-route="/commercial" class="nav-link">
+          💼 Gestion commerciale
+        </a>
+        <a href="#/internet" data-route="/internet" class="nav-link">
+          🌐 Internet
+        </a>
+        <a href="#/parametrages" data-route="/parametrages" class="nav-link admin-only">
+          ⚙️ Paramétrages
+        </a>
+      </nav>
+
+      <main id="page-container" class="page-container">
+        <!-- Pages are injected here -->
+      </main>
+    </div>
+  </section>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
