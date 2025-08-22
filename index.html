@@ -42,7 +42,7 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.25)}
       <label>Mot de passe</label>
       <input id="login-password" type="password" placeholder="Mot de passe" required />
       <button type="submit" class="btn-primary">Connexion</button>
-      <p class="hint">Comptes de démonstration : <strong>admin/admin</strong> • <strong>agence/agence</strong> • Si vous saisissez un email, l’app tente d’abord un login Firebase.</p>
+      <p class="hint">Comptes de démonstration : <strong>admin/admin</strong> • <strong>agence/agence</strong></p>
     </form>
   </div>
 </section>
@@ -70,32 +70,6 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.25)}
   </div>
 </section>
 
-
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getAnalytics, isSupported } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js";
-  import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-  import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-  const firebaseConfig = {
-    apiKey: "AIzaSyBFWjU9m6I5DzQQMjh1bNIvybK5kLZbank",
-    authDomain: "planification-agents-a-m.firebaseapp.com",
-    projectId: "planification-agents-a-m",
-    storageBucket: "planification-agents-a-m.firebasestorage.app",
-    messagingSenderId: "231505901600",
-    appId: "1:231505901600:web:1b6fa5576ec3de1714a445",
-    measurementId: "G-43CLRXC1V3"
-  };
-  const app = initializeApp(firebaseConfig);
-  try { if (await isSupported()) getAnalytics(app); } catch(e){}
-  window.fbAuth = getAuth(app);
-  window.fbFirestore = getFirestore(app);
-  window.fbSignIn = (email, pwd) => signInWithEmailAndPassword(window.fbAuth, email, pwd);
-  window.fbFetchRole = async (uid) => {
-    const snap = await getDoc(doc(window.fbFirestore, "users", uid));
-    return snap.exists() ? snap.data() : null;
-  };
-  window.fbSignOut = () => signOut(window.fbAuth);
-</script>
 
 
 <script>
