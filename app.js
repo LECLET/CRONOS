@@ -91,12 +91,23 @@ function initLogin() {
     const username = $("#login-username").value.trim();
     const password = $("#login-password").value;
 
-    const user = getUsers().find(u => u.username === username && u.password === password);
-    if (!user) {
-      alert("Identifiants invalides");
-      return;
-    }
-    setSession(user);
+    tryFirebaseLogin(username, password).then(fbUser => {
+      if (fbUser) {
+        setSession(fbUser);
+        userInfo.textContent = `${fbUser.username} • ${fbUser.role.toUpperCase()} • ${fbUser.agency}`;
+        showApp();
+        location.hash = "#/planifications";
+        onRouteChange();
+      } else {
+        const user = getUsers().find(u => u.username === username && u.password === password);
+        if (!user) { alert("Identifiants invalides"); return; }
+        setSession(user);
+        userInfo.textContent = `${user.username} • ${user.role.toUpperCase()} • ${user.agency}`;
+        showApp();
+        location.hash = "#/planifications";
+        onRouteChange();
+      }
+    });
     userInfo.textContent = `${user.username} • ${user.role.toUpperCase()} • ${user.agency}`;
     showApp();
     location.hash = "#/planifications";
@@ -110,6 +121,33 @@ function initLogout() {
     location.hash = "";
     showLogin();
   });
+}
+
+
+// --- Firebase helpers (if available) ---
+async function tryFirebaseLogin(username, password) {
+  try {
+    if (!window.CRONOS) return null;
+    if (!username.includes("@")) return null; // only treat as Firebase when email is provided
+    const { auth, signInWithEmailAndPassword, db, doc, getDoc } = window.CRONOS;
+    const cred = await signInWithEmailAndPassword(auth, username, password);
+    const uid = cred.user.uid;
+    // Try to load a profile from Firestore: users/{uid} with {role, agency}
+    let role = "agence";
+    let agency = "AUTRE";
+    try {
+      const snap = await getDoc(doc(db, "users", uid));
+      if (snap.exists()) {
+        const data = snap.data() || {};
+        role = (data.role === "admin" ? "admin" : "agence");
+        agency = data.agency || agency;
+      }
+    } catch(e) {}
+    return { username, role, agency, uid };
+  } catch (e) {
+    console.warn("Firebase login failed", e);
+    return null;
+  }
 }
 
 // Boot

@@ -27,3 +27,12 @@ Base statique prête à déployer sur **GitHub Pages** (aucune dépendance exter
 - **Planification** avec FullCalendar (drag&drop), gestion des indisponibilités et trames.
 - **Commercial** (clients, sites, devis, facturation).
 - **Journal d'audit** et exports Excel.
+
+
+## Intégration Firebase
+- Fichier `js/firebase-init.mjs` (ESM) initialise Firebase (App, Auth, Firestore, Storage) via CDN **gstatic** (compatible GitHub Pages).
+- À la connexion, si vous saisissez un **email**, l'app tente un **login Firebase** (`Email/Password`). Après connexion, elle lit `users/{uid}` dans **Firestore** pour récupérer `role` et `agency`.
+- Si aucun compte Firebase n'est trouvé, la connexion bascule sur les comptes locaux de démonstration.
+
+### Sécurité
+Les clés Firebase exposées côté client sont **normales** (non secrètes). Configurez les règles **Auth/Firestore/Storage** côté Console Firebase.
