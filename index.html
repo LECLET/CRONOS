@@ -1,67 +1,438 @@
-<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CRONOS V8</title><style>:root{--bg:#0f172a;--panel:#111827;--muted:#9aa4b2;--accent:#2563eb;--accent-2:#1e40af;--text:#e5e7eb}
-*{box-sizing:border-box}html,body{height:100%}body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,Noto Sans;background:#0b1020;color:var(--text)}
-.topbar{height:72px;background:#0b1020;border-bottom:1px solid #1f2937;display:flex;align-items:center;justify-content:space-between;padding:0 20px;gap:16px}
-.brand{display:flex;align-items:center;gap:12px;font-weight:700;letter-spacing:1px}
-.brand img{width:40px;height:40px}
-.userbox{display:flex;align-items:center;gap:10px;color:var(--muted)}
-.navbar{background:#0b1020;border-bottom:1px solid #1f2937;display:flex;gap:8px;padding:8px 12px;overflow-x:auto}
-.navlink{padding:10px 14px;border-radius:10px;color:var(--text);text-decoration:none;border:1px solid transparent;white-space:nowrap}
-.navlink:hover{background:#0f172a;border-color:#1f2937}.navlink.active{background:#111827;border-color:#1f2937}
-.page-container{padding:18px}
-.card{background:#0b1020;border:1px solid #1f2937;border-radius:14px;padding:16px;margin-bottom:14px}
-.btn-primary{padding:10px 14px;border:none;border-radius:10px;background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#fff;cursor:pointer}
-.btn-ghost{padding:8px 12px;border-radius:10px;background:transparent;border:1px solid #1f2937;color:var(--text);cursor:pointer}
-input,select{width:100%;padding:10px 12px;border-radius:10px;border:1px solid #1f2937;background:#0b1020;color:var(--text)}
-.hint{font-size:12px;color:var(--muted)}
-table{width:100%;border-collapse:collapse}th,td{border:1px solid #1f2937;padding:6px}th{text-align:left;background:#0f172a}
-.badge{display:inline-block;padding:4px 8px;border-radius:999px;background:#111827;border:1px solid #1f2937;color:var(--muted);font-size:12px}</style></head>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>CRONOS V9e11 — Multi-sites Agent + Inter-sites Check</title>
+<style>
+:root{--bg:#0b1020;--panel:#0f152b;--line:#1f2937;--text:#e5e7eb;--muted:#9aa4b2;--ok:#16a34a;--bad:#ef4444;--warn:#f59e0b;--blue:#3b82f6;--yellow:#facc15;--first-col:300px}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial}
+header{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line)}
+.brand{display:flex;gap:8px;align-items:center;font-weight:700}
+.badge{display:inline-block;padding:2px 6px;border-radius:10px;border:1px solid var(--line);color:var(--muted);font-size:12px;margin-left:6px}
+.btn{padding:8px 12px;border-radius:10px;border:1px solid var(--line);background:#0b1020;color:var(--text);cursor:pointer}
+.card{border:1px solid var(--line);border-radius:12px;margin:12px;padding:12px;background:var(--panel)}
+.grid{display:grid;gap:12px}
+select,input{width:100%;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:#0b1020;color:var(--text)}
+.layout{display:grid;grid-template-columns:360px 1fr;gap:12px}
+.left .agent{border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:8px}
+.left .agent .name{font-weight:600;cursor:pointer}
+.left .agent .meta{font-size:12px;color:var(--muted);margin-top:4px}
+.month{border:1px solid var(--line);border-radius:12px;overflow:auto}
+.head,.row-header,.row-agent{display:grid;grid-template-columns:var(--first-col) repeat(31,1fr);min-width:1100px}
+.head>div,.row-header>div,.row-agent>div{border-left:1px solid var(--line);padding:6px;font-size:12px;line-height:1.1}
+.head>div:first-child,.row-header>div:first-child,.row-agent>div:first-child{border-left:none}
+.row-header{background:#0d1224;border-top:1px solid var(--line)}
+.row-agent{background:#0a0f20}
+.cell{min-height:44px;position:relative}
+.cell.drop{outline:2px dashed #334155;outline-offset:-2px}
+.pill{display:inline-flex;flex-direction:column;align-items:flex-start;gap:2px;border:1px solid var(--line);border-radius:8px;padding:2px 6px;margin:3px 2px;font-size:12px;white-space:nowrap}
+.pill.yellow{border-color:#4c4b22}
+.pill.blue{border-color:#1b3a6d}
+.pill.na{border-color:#7f1d1d;color:#fecaca;background:#3f1d1d}
+.small{font-size:11px;color:var(--muted)}
+.flex{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.badge-na{display:inline-block;padding:2px 6px;border-radius:10px;border:1px solid #7f1d1d;background:#3f1d1d;color:#fecaca;font-size:11px;margin-left:8px}
+.recap-top{border:1px solid var(--line);border-radius:12px;padding:8px;overflow:auto}
+.recap-grid{display:grid;grid-template-columns:140px 120px 80px 80px 70px 70px repeat(7,46px) 100px 110px 120px 140px 140px;gap:6px;min-width:1200px}
+.recap-grid>div{font-size:12px}
+.recap-grid .h{color:var(--muted)}
+/* Modal */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;padding:20px}
+.modal .sheet{background:#101736;border:1px solid var(--line);border-radius:12px;max-width:1100px;width:100%;max-height:90vh;overflow:auto;padding:16px}
+.modal .sheet h3{margin-top:0}
+.agent-cal{display:grid;grid-template-columns:260px repeat(31,1fr);gap:4px;min-width:1100px}
+.agent-cal>div{border:1px solid var(--line);padding:6px;font-size:12px}
+.print-toolbar{display:flex;gap:8px;margin-bottom:8px}
+.tabs{display:flex;gap:8px;margin-bottom:8px}
+.tab{padding:6px 10px;border:1px solid var(--line);border-radius:8px;cursor:pointer;background:#0b1020}
+.tab.active{background:#162044}
+.searchbar{display:flex;gap:8px;align-items:end}
+@media print{header,.card.left,.print-hide{display:none !important}.modal{position:static;display:block;background:transparent}.modal .sheet{border:none;max-width:100%;}}
+</style>
+</head>
 <body>
-<header class="topbar">
-  <div class="brand"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8Xw8AApEBQ/9Xq2wAAAAASUVORK5CYII=" alt="LOGO"/><span>CRONOS</span></div>
-  <nav class="navbar">
-    <a href="#/commercial" class="navlink">💼 GESTION COMMERCIALE</a>
-    <a href="#/agents" class="navlink">👤 AGENTS</a>
-    <a href="#/planifications" class="navlink">📅 PLANIFICATION</a>
-    <a href="#/internet" class="navlink">🌐 INTERNET</a>
-    <a href="#/param" class="navlink">⚙️ PARAMÉTRAGES</a>
-  </nav>
-  <div class="userbox"><span id="u-info">demo • AUTRE</span><button class="btn-ghost" id="logout">Déconnexion</button></div>
+<header>
+  <div class="brand">CRONOS <span class="badge">V9e11</span></div>
+  <div class="flex">
+    <div class="searchbar">
+      <div>
+        <label>Rechercher un agent</label>
+        <input id="searchAgent" placeholder="Matricule, NOM, Prénom…" />
+      </div>
+      <button class="btn" id="openAgentGlobal">Ouvrir</button>
+    </div>
+    <button class="btn" id="btnParams">Paramètres (JF)</button>
+    <button class="btn" id="btnExportCSV">Export CSV prépaie</button>
+    <button class="btn" id="btnExportXLSX">Export XLSX (direct)</button>
+  </div>
 </header>
-<main id="page" class="page-container"></main>
-<script>
-const $=(s)=>document.querySelector(s);
-const PAGES={"/commercial":"<div class='card'><h2>Gestion commerciale</h2><p>(placeholder)</p></div>","/agents":"<div class='card'><h2>Agents</h2><p>(placeholder)</p></div>","/planifications":"<div class='card'><h2>Planification</h2><p>Chargement…</p><div class='card'><button class='btn-ghost' id='seed'>Injecter données de test</button></div></div>","/internet":"<div class='card'><h2>Internet</h2><p>(placeholder)</p></div>","/param":"<div class='card'><h2>Paramétrages</h2><p>(placeholder)</p></div>"}
-function route(){ const r=location.hash||"#/planifications"; document.querySelectorAll(".navlink").forEach(a=>a.classList.toggle("active", a.getAttribute("href")===r)); document.getElementById("page").innerHTML=PAGES[r.replace("#","")]||"<div class='card'><h2>Page</h2></div>"; }
-window.addEventListener("hashchange", route); route();
-</script>
-<script>
 
-const SITE_KEY='cronos_sites_v1', PRE_KEY='cronos_prestations_v1', VAC_KEY='cronos_vacations_v1', TRM_KEY='cronos_trame_v1', PLN_KEY='cronos_planning_v1', AGENTS_KEY='cronos_agents_v1';
-function lsGet(k){ try{return JSON.parse(localStorage.getItem(k)||'[]');}catch{return[];} } function lsSet(k,v){ localStorage.setItem(k, JSON.stringify(v)); }
-function uid(){ return String(Date.now())+Math.random(); }
-function isoWeekStart(ds){ const d=new Date(ds||new Date().toISOString().slice(0,10)); const w=d.getDay(); const diff=(w===1)?0:(w===0?-6:1-w); d.setDate(d.getDate()+diff); d.setHours(0,0,0,0); return d.toISOString().slice(0,10); }
-function addDays(d, n){ const x=new Date(d); x.setDate(x.getDate()+n); return x; }
-function fmtDate(d){ return d.toISOString().slice(0,10); }
-function getPlan(siteId, weekStartISO){ const arr=lsGet(PLN_KEY); return arr.find(p=>p.siteId===siteId && p.weekStartISO===weekStartISO); }
-function agentById(id){ return lsGet(AGENTS_KEY).find(a=>a.id===id); }
-function pr_refreshAgentOptions(){ const sel=document.getElementById('pr-agent'); if(!sel) return; const arr=lsGet(AGENTS_KEY); sel.innerHTML = arr.map(a=>`<option value="${a.id}">${(a.last||'').toUpperCase()} ${a.first||''} • ${a.mat||''}</option>`).join(''); }
-function pr_bind(){ const mode=document.getElementById('pr-mode'); const range=document.getElementById('pr-range'); const ac=document.getElementById('pr-agent-col'); const wc=document.getElementById('pr-week-col'); const mc=document.getElementById('pr-month-col'); const fc=document.getElementById('pr-from-col'); const tc=document.getElementById('pr-to-col'); function sync(){ ac.style.display=(mode.value==='agent')?'block':'none'; wc.style.display=(range.value==='week')?'block':'none'; mc.style.display=(range.value==='month')?'block':'none'; const cust=(range.value==='custom'); fc.style.display=cust?'block':'none'; tc.style.display=cust?'block':'none'; } mode.onchange=sync; range.onchange=sync; document.getElementById('pr-week').value=isoWeekStart(); document.getElementById('pr-month').value=new Date().toISOString().slice(0,7); document.getElementById('pr-from').value=new Date().toISOString().slice(0,10); document.getElementById('pr-to').value=new Date().toISOString().slice(0,10); sync(); }
-function pr_range(){ const r=document.getElementById('pr-range').value; if(r==='week'){ const ws=document.getElementById('pr-week').value; const start=new Date(ws); const end=addDays(start,6); return {start,end}; } else if(r==='month'){ const ym=document.getElementById('pr-month').value; const start=new Date(ym+'-01'); const end=new Date(start); end.setMonth(end.getMonth()+1); end.setDate(0); return {start,end}; } else { const start=new Date(document.getElementById('pr-from').value); const end=new Date(document.getElementById('pr-to').value); return {start,end}; } }
-function preIdx(){ return Object.fromEntries(lsGet(PRE_KEY).map(p=>[p.id,p])); } function vacIdx(){ return Object.fromEntries(lsGet(VAC_KEY).map(v=>[v.id,v])); }
-function pr_collect(siteId, start, end){ const pIdx=preIdx(), vIdx=vacIdx(); const days=[]; for(let d=new Date(start); d<=end; d=addDays(d,1)) days.push(new Date(d)); const out=[]; for(const d of days){ const dow=d.getDay(); const ws=isoWeekStart(fmtDate(d)); const plan=getPlan(siteId, ws); const items=[]; if(plan){ for(const cid in plan.cells){ const [cd,preId,vacId,slot]=cid.split('_'); if(Number(cd)!==dow) continue; const asg=plan.cells[cid]; const ag=agentById(asg.agentId); const pre=pIdx[preId], vac=vIdx[vacId]; items.push({pre,vac,slot:Number(slot||0),agent:ag}); } } out.push({dateISO:fmtDate(d), day:dow, items}); } return out; }
-function pr_print(){ const sess=JSON.parse(sessionStorage.getItem('sess')||'null'); const siteId = (localStorage.getItem('pl_current_site')||''); if(!siteId){ alert('Sélectionnez un site (démo bouton SEED).'); return; } const mode=document.getElementById('pr-mode').value; const {start,end}=pr_range(); const s=(lsGet('cronos_sites_v1').find(x=>x.id===siteId)||{{}}); const sname=s.name||''; const data=pr_collect(siteId, start, end); if(mode==='site'){ const win=window.open('','_blank'); let html='<!doctype html><html><head><meta charset=utf-8><title>Planning Site</title><style>body{{font-family:Arial;margin:22px}} table{{width:100%;border-collapse:collapse}} th,td{{border:1px solid #ddd;padding:6px}} th{{background:#f5f5f5}}</style></head><body>'; html+='<h1>Planning Site — '+sname+'</h1><div>Période : '+fmtDate(start)+' → '+fmtDate(end)+'</div>'; for(const day of data){ html+='<h2>'+['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'][day.day]+' — '+day.dateISO+'</h2>'; html+='<table><thead><tr><th>Profil</th><th>Vacation</th><th>Poste</th><th>Agent</th><th>Matricule</th></tr></thead><tbody>'; if(day.items.length===0) html+='<tr><td colspan=5 style="text-align:center;color:#777">Aucune affectation</td></tr>'; day.items.sort((a,b)=> (a.pre?.prof||'').localeCompare(b.pre?.prof||'')||(a.vac?.start||'').localeCompare(b.vac?.start||'')||(a.slot-b.slot)); for(const it of day.items){ const prof=it.pre?it.pre.prof:''; const vac=it.vac?(it.vac.code+' '+it.vac.start+'-'+it.vac.end):''; const ag=it.agent?((it.agent.last||'').toUpperCase()+' '+(it.agent.first||'')):'—'; const mat=it.agent?(it.agent.mat||''):''; html+='<tr><td>'+prof+'</td><td>'+vac+'</td><td>'+(1+(it.slot||0))+'</td><td>'+ag+'</td><td>'+mat+'</td></tr>'; } html+='</tbody></table>'; } html+='</body></html>'; win.document.write(html); win.document.close(); win.focus(); win.print(); } else { const agentId=document.getElementById('pr-agent').value; const ag=(lsGet(AGENTS_KEY).find(a=>a.id===agentId)||{{}}); const win=window.open('','_blank'); let html='<!doctype html><html><head><meta charset=utf-8><title>Planning Agent</title><style>body{{font-family:Arial;margin:22px}} table{{width:100%;border-collapse:collapse}} th,td{{border:1px solid #ddd;padding:6px}} th{{background:#f5f5f5}}</style></head><body>'; html+='<h1>Planning Agent — '+((ag.last||'').toUpperCase()+' '+(ag.first||''))+'</h1><div>Période : '+fmtDate(start)+' → '+fmtDate(end)+' — Site : '+sname+'</div>'; html+='<table><thead><tr><th>Date</th><th>Site</th><th>Profil</th><th>Vacation</th></tr></thead><tbody>'; for(const day of data){ const mine=day.items.filter(it=>it.agent && it.agent.id===agentId); mine.sort((a,b)=> (a.vac?.start||'').localeCompare(b.vac?.start||'')); for(const it of mine){ const prof=it.pre?it.pre.prof:''; const vac=it.vac?(it.vac.code+' '+it.vac.start+'-'+it.vac.end):''; html+='<tr><td>'+day.dateISO+'</td><td>'+sname+'</td><td>'+prof+'</td><td>'+vac+'</td></tr>'; } } html+='</tbody></table></body></html>'; win.document.write(html); win.document.close(); win.focus(); win.print(); } }
-function seed(){ // quick demo data
-  const siteId=uid(); const agentId=uid(); const preId=uid(); const vacId=uid();
-  lsSet(SITE_KEY, [{{id:siteId,name:'SITE ALPHA',agency:'CASA',address:'Zone indus'}}]);
-  lsSet(AGENTS_KEY, [{{id:agentId,last:'Amrani',first:'Youssef',mat:'A001',agency:'CASA'}}]);
-  lsSet(PRE_KEY, [{{id:preId,siteId:siteId,act:'Sécurité',prof:'SSIAP1',unit:'h/j'}}]);
-  lsSet(VAC_KEY, [{{id:vacId,siteId:siteId,code:'J',start:'08:00',end:'18:00',hours:10}}]);
-  const ws=isoWeekStart(); const plan={{id:uid(),siteId:siteId,weekStartISO:ws,cells:{{}}}}; plan.cells['1_'+preId+'_'+vacId+'_0']={{agentId:agentId}}; plan.cells['2_'+preId+'_'+vacId+'_0']={{agentId:agentId}}; plan.cells['3_'+preId+'_'+vacId+'_0']={{agentId:agentId}}; const plans=lsGet(PLN_KEY); plans.push(plan); lsSet(PLN_KEY, plans); localStorage.setItem('pl_current_site', siteId); alert('Données de test injectées. Allez dans Impression pour imprimer.'); pr_refreshAgentOptions();
+<div class="card grid" style="grid-template-columns:repeat(12,1fr)">
+  <div style="grid-column:span 3">
+    <label>Agence</label>
+    <select id="agency"></select>
+  </div>
+  <div style="grid-column:span 3">
+    <label>Site</label>
+    <select id="site"></select>
+  </div>
+  <div style="grid-column:span 3">
+    <label>Mois (2025 → 2040)</label>
+    <div class="flex">
+      <button class="btn" id="prevM">◀</button>
+      <select id="monthSel" style="min-width:220px"></select>
+      <button class="btn" id="nextM">▶</button>
+    </div>
+  </div>
+  <div style="grid-column:span 3">
+    <label>Jours fériés (global)</label>
+    <input id="holidays" placeholder="2025-01-01,2025-05-01">
+  </div>
+</div>
+
+<div class="card recap-top print-hide">
+  <h3 style="margin:0 0 8px 0">Profils de prestation — Récap</h3>
+  <div id="recap" class="recap-grid"></div>
+</div>
+
+<div class="layout">
+  <div class="card left print-hide">
+    <h3 style="margin-top:0">Agents (mensuel & hebdo)</h3>
+    <div id="agents"></div>
+  </div>
+  <div class="card month">
+    <div class="head" id="head"></div>
+    <div id="body"></div>
+  </div>
+</div>
+
+<!-- Modal fiche agent -->
+<div class="modal" id="agentModal">
+  <div class="sheet">
+    <div class="print-toolbar">
+      <button class="btn print-hide" id="closeModal">Fermer</button>
+      <button class="btn" onclick="window.print()">Imprimer</button>
+      <button class="btn print-hide" onclick="alert('Publication à brancher (portail)')">Publier</button>
+    </div>
+    <div class="tabs print-hide">
+      <div class="tab active" id="tabSite">Site courant</div>
+      <div class="tab" id="tabMulti">Tous les sites (agence)</div>
+    </div>
+    <h3 id="agentTitle"></h3>
+    <div id="agentCal" class="agent-cal"></div>
+  </div>
+</div>
+
+<!-- XLSX lib (optional offline). If missing, export falls back to CSV -->
+<script src="lib/xlsx.full.min.js" onerror="console.warn('xlsx lib non trouvée, fallback CSV');"></script>
+<script>
+// ===== Seed =====
+const AGENCIES=[{id:'AG1',name:'CASABLANCA'},{id:'AG2',name:'RABAT'},{id:'AG3',name:'MARRAKECH'}];
+const SITES=[{id:'S1',name:'CASABLANCA – HQ',agencyId:'AG1'},{id:'S2',name:'RABAT – Ministère',agencyId:'AG2'},{id:'S3',name:'MARRAKECH – Hôpital',agencyId:'AG3'}];
+const AGENTS=[
+  {id:'A1',mat:'A001',last:'Amrani',first:'Youssef',agencyId:'AG1',contractType:'heures',contractHours:44,contractDays:6},
+  {id:'A2',mat:'A002',last:'Bennani',first:'Salma',agencyId:'AG2',contractType:'heures',contractHours:44,contractDays:6},
+  {id:'A3',mat:'A003',last:'ElFassi',first:'Karim',agencyId:'AG3',contractType:'forfait_jour',contractHours:44,contractDays:6},
+  {id:'A4',mat:'A004',last:'Khalid',first:'Omar',agencyId:'AG1',contractType:'heures',contractHours:44,contractDays:6}
+];
+const ROWS={
+  'S1':[ {id:'R1',profil:'ADS',activite:'JOUR', start:'08:00', end:'18:00', nb:1, mask:[1,1,1,1,1,0,0], color:'yellow'} ],
+  'S2':[ {id:'R2',profil:'ADS',activite:'JOUR', start:'08:00', end:'18:00', nb:1, mask:[1,1,1,1,1,0,0], color:'yellow'} ],
+  'S3':[ {id:'R3',profil:'SSIAP1',activite:'JOUR', start:'08:00', end:'16:00', nb:1, mask:[1,1,1,1,1,1,1], color:'yellow'},
+         {id:'R4',profil:'SSIAP1',activite:'NUIT', start:'16:00', end:'08:00', nb:1, mask:[1,1,1,1,1,1,1], color:'blue'} ]
+};
+let PLAN={}, OVERRIDE={};
+
+// ===== Utils =====
+const $=s=>document.querySelector(s);
+function byId(id){return document.getElementById(id)}
+function toMin(hhmm){const [h,m]=hhmm.split(':').map(Number);return h*60+m;}
+function spanMin(s,e){return (e>=s)? e-s : (1440-s)+e;}
+function spanDays(y,m){ const start=new Date(y,m,1), end=new Date(y,m+1,0); const arr=[]; for(let d=new Date(start); d<=end; d.setDate(d.getDate()+1)) arr.push(new Date(d)); return arr; }
+function fmt(d){return d.toISOString().slice(0,10);}
+function parseJF(){return (byId('holidays').value||'').split(',').map(s=>s.trim()).filter(Boolean);}
+function dayReq(row,d){return !!row.mask[d.getDay()===0?6:d.getDay()-1];}
+function siteAgents(siteId){const agId=SITES.find(s=>s.id===siteId)?.agencyId; return AGENTS.filter(a=>a.agencyId===agId);}
+function night(a,b){const s=toMin(a), e=toMin(b); const ov=(a1,a2,b1,b2)=>a1<b2&&b1<a2; return e>=s? (ov(s,e,1320,1440)||ov(s,e,0,300)) : true;}
+
+// ===== Month =====
+let CUR_Y=2025,CUR_M=1;
+function fillMonthSelect(){
+  const sel=byId('monthSel'); sel.innerHTML='';
+  for(let y=2025;y<=2040;y++) for(let m=1;m<=12;m++){ const o=document.createElement('option'); o.value=`${y}-${String(m).padStart(2,'0')}`; o.textContent=new Date(y,m-1,1).toLocaleString('fr-FR',{month:'long',year:'numeric'}); if(y===CUR_Y&&m===CUR_M) o.selected=true; sel.appendChild(o); }
+  sel.onchange=e=>{const [y,m]=e.target.value.split('-').map(Number); CUR_Y=y; CUR_M=m; drawAll();};
+  byId('prevM').onclick=()=>{let y=CUR_Y,m=CUR_M-1;if(m<1){y--;m=12}if(y<2025)return;CUR_Y=y;CUR_M=m;fillMonthSelect();drawAll();};
+  byId('nextM').onclick=()=>{let y=CUR_Y,m=CUR_M+1;if(m>12){y++;m=1}if(y>2040)return;CUR_Y=y;CUR_M=m;fillMonthSelect();drawAll();};
 }
-document.addEventListener('click',(e)=>{{ if(e.target?.id==='pr-print') pr_print(); if(e.target?.id==='seed') seed(); }});
-const __r=(typeof route==='function')?route:()=>{{}};
-route=function(){{ __r(); if((location.hash||'#/planifications')==='#/planifications'){{ document.getElementById('page').innerHTML=`{plan_ui}`; pr_refreshAgentOptions(); pr_bind(); }} }};
 
+// ===== Header =====
+function drawHead(){ const days=spanDays(CUR_Y,CUR_M-1); const h=byId('head'); let html=`<div>Profil · Vacation</div>`; html+=days.map(d=>`<div>${d.getDate()}</div>`).join(''); h.innerHTML=html; }
+
+// ===== Recap =====
+function rowHours(r){return spanMin(toMin(r.start),toMin(r.end))/60;}
+function renderRecap(){
+  const root=byId('recap'); root.innerHTML='';
+  const head=['Profil','Activité','Début','Fin','Pause','Nb','LU','MA','ME','JE','VE','SA','DI','Vac./sem','Affectées','Non affectées','Heures prévues (mois)','Heures affectées (mois)'];
+  head.forEach(x=>{const d=document.createElement('div');d.textContent=x;d.className='h';root.appendChild(d)});
+  const site=byId('site').value, rows=ROWS[site]||[], days=spanDays(CUR_Y,CUR_M-1);
+  rows.forEach(r=>{
+    let need=0, aff=0, hp=0, ha=0, vacSem=r.mask.reduce((s,x)=>s+(x?1:0),0)*r.nb;
+    const flags=[0,0,0,0,0,0,0];
+    days.forEach(d=>{
+      const key=`${site}|${r.id}|${fmt(d)}`;
+      const req=dayReq(r,d);
+      if(req){ need+=1; hp+=rowHours(r); flags[(d.getDay()+6)%7]=1; }
+      if(PLAN[key]){ aff+=1; const ov=OVERRIDE[key]||{}; const st=ov.start||r.start; const en=ov.end||r.end; ha+=spanMin(toMin(st),toMin(en))/60; }
+    });
+    const na=need-aff;
+    const fields=[`${r.profil}`, r.activite, r.start, r.end, '—', r.nb].concat(flags.map(x=>x?'✔️':'—')).concat([vacSem, aff, na, hp.toFixed(2), ha.toFixed(2)]);
+    fields.forEach(x=>{const d=document.createElement('div');d.textContent=x;root.appendChild(d)});
+  });
+}
+
+// ===== Drag & legal (inter-sites) =====
+function buildIntervalsAllSites(agentId){
+  const list=[];
+  for(const k of Object.keys(PLAN)){
+    if(PLAN[k]!==agentId) continue;
+    const [s,rowId,ds]=k.split('|');
+    const row=(ROWS[s]||[]).find(x=>x.id===rowId); if(!row) continue;
+    const ov=OVERRIDE[k]||{}; const st=ov.start||row.start; const en=ov.end||row.end;
+    const d=new Date(ds);
+    const stD=new Date(d.getFullYear(),d.getMonth(),d.getDate(),parseInt(st),parseInt(st.slice(3)));
+    let enD=new Date(d.getFullYear(),d.getMonth(),d.getDate(),parseInt(en),parseInt(en.slice(3)));
+    if(toMin(en)<=toMin(st)) enD.setDate(enD.getDate()+1);
+    list.push({site:s,start:stD,end:enD});
+  }
+  list.sort((a,b)=>a.start-b.start);
+  return list;
+}
+function hasIssuesInterSites(agent, newDate, st, en){
+  const stD=new Date(newDate.getFullYear(),newDate.getMonth(),newDate.getDate(),parseInt(st),parseInt(st.slice(3)));
+  let enD=new Date(newDate.getFullYear(),newDate.getMonth(),newDate.getDate(),parseInt(en),parseInt(en.slice(3))); if(toMin(en)<=toMin(st)) enD.setDate(enD.getDate()+1);
+  const list=buildIntervalsAllSites(agent.id);
+  let overlap=false, rest=false, details=''; let prev=null,next=null;
+  for(const iv of list){ if(iv.end>stD && iv.start<enD){ overlap=true; details='Chevauchement inter-sites.'; break; } if(iv.end<=stD) prev=iv; if(!next && iv.start>=enD) next=iv; }
+  const need=11;
+  if(prev){ const h=(stD-prev.end)/36e5; if(h<need){ rest=true; details+=(details?'\n':'')+`Repos avant ${h.toFixed(2)}h (<11h)`; } }
+  if(next){ const h=(next.start-enD)/36e5; if(h<need){ rest=true; details+=(details?'\n':'')+`Repos après ${h.toFixed(2)}h (<11h)`; } }
+  return {overlap,rest,details};
+}
+
+function allowDrop(e){ e.preventDefault(); e.currentTarget.classList.add('drop'); }
+function leaveDrop(e){ e.currentTarget.classList.remove('drop'); }
+function onDropAssign(e){
+  e.preventDefault(); e.currentTarget.classList.remove('drop');
+  const agent=window._dragAgent; if(!agent) return;
+  const key=e.currentTarget.dataset.key; const [site,rowId,dateStr]=key.split('|'); const d=new Date(dateStr);
+  const siteObj=SITES.find(s=>s.id===site); if(agent.agencyId!==siteObj.agencyId){ alert('Agent d’une autre agence : refusé.'); return; }
+  const row=(ROWS[site]||[]).find(x=>x.id===rowId);
+  const check=hasIssuesInterSites(agent, d, row.start, row.end);
+  if(check.overlap||check.rest){ if(!confirm('⚠️ '+(check.details||'Contrainte détectée')+'\n\nValider quand même ?')) return; }
+  PLAN[key]=agent.id; drawAll();
+}
+function onCellContext(e){
+  e.preventDefault();
+  const key=e.currentTarget.dataset.key; if(!PLAN[key]) return;
+  const [site,rowId] = key.split('|'); const row=(ROWS[site]||[]).find(x=>x.id===rowId);
+  const ov=OVERRIDE[key]||{};
+  const cur=`Actuel:\n - Horaire: ${ov.start&&ov.end?ov.start+'-'+ov.end:row.start+'-'+row.end}\n - Dérogation: ${ov.gapMin?ov.gapMin+' min':'(aucune)'}\n\n1) Modifier horaire\n2) Dérogation retard (minutes)\n3) Supprimer dérogation/horaire\n4) Désaffecter\n0) Annuler`;
+  const resp=prompt(cur,''); if(resp===null) return;
+  if(resp==='1'){ const val=prompt('Nouvelle plage horaire (HH:MM-HH:MM):',''); if(!val) return; const m=val.match(/^(\d{2}:\d{2})-(\d{2}:\d{2})$/); if(!m) return alert('Format invalide.'); OVERRIDE[key]={...(OVERRIDE[key]||{}), start:m[1], end:m[2]}; }
+  else if(resp==='2'){ const v=prompt('Minutes non couvertes :','15'); if(v===null) return; const n=parseInt(v,10); if(isNaN(n)||n<0) return alert('Valeur invalide'); OVERRIDE[key]={...(OVERRIDE[key]||{}), gapMin:n}; }
+  else if(resp==='3'){ delete OVERRIDE[key]; }
+  else if(resp==='4'){ delete PLAN[key]; delete OVERRIDE[key]; }
+  drawAll();
+}
+
+// ===== Body =====
+function drawHead(){ const days=spanDays(CUR_Y,CUR_M-1); const h=byId('head'); let html=`<div>Profil · Vacation</div>`; html+=days.map(d=>`<div>${d.getDate()}</div>`).join(''); h.innerHTML=html; }
+function drawBody(){
+  const site=byId('site').value; const rows=[...(ROWS[site]||[])]; const days=spanDays(CUR_Y,CUR_M-1);
+  rows.sort((a,b)=>{
+    const c1=days.reduce((s,d)=>s+(dayReq(a,d)&&!PLAN[`${site}|${a.id}|${fmt(d)}`]?1:0),0);
+    const c2=days.reduce((s,d)=>s+(dayReq(b,d)&&!PLAN[`${site}|${b.id}|${fmt(d)}`]?1:0),0);
+    return (c2>0)-(c1>0);
+  });
+  const body=byId('body'); body.innerHTML='';
+  rows.forEach(r=>{
+    let header=document.createElement('div'); header.className='row-header';
+    let title=document.createElement('div'); title.textContent=`${r.profil} ${r.start}-${r.end}`; header.appendChild(title);
+    let naCount=0;
+    days.forEach(d=>{
+      const key=`${site}|${r.id}|${fmt(d)}`;
+      const div=document.createElement('div'); div.className='cell'; div.dataset.key=key;
+      div.addEventListener('dragover',allowDrop); div.addEventListener('dragleave',leaveDrop); div.addEventListener('drop',onDropAssign);
+      if(dayReq(r,d) && !PLAN[key]){ naCount++; div.innerHTML=`<span class="pill na"><span>—</span><span>—</span></span>`; }
+      header.appendChild(div);
+    });
+    if(naCount>0){ const b=document.createElement('span'); b.className='badge-na'; b.textContent=`NON AFFECTÉ : ${naCount}`; title.appendChild(b); }
+    body.appendChild(header);
+    siteAgents(site).forEach(a=>{
+      let has=false; for(const d of days){ const key=`${site}|${r.id}|${fmt(d)}`; if(PLAN[key]===a.id){ has=true; break; } }
+      if(!has) return;
+      let rowA=document.createElement('div'); rowA.className='row-agent';
+      let left=document.createElement('div'); left.innerHTML=`<b class="agent-link" data-id="${a.id}">${a.last.toUpperCase()} ${a.first}</b>`; rowA.appendChild(left);
+      days.forEach(d=>{
+        const key=`${site}|${r.id}|${fmt(d)}`; const cell=document.createElement('div'); cell.className='cell'; cell.dataset.key=key;
+        if(PLAN[key]===a.id){
+          const ov=OVERRIDE[key]||{}; const st=ov.start||r.start; const en=ov.end||r.end;
+          cell.innerHTML=`<span class="pill ${r.color}" title="${st}-${en}"><span>${st}</span><span>${en}</span></span>` + (ov.gapMin?`<span class="small">- ${ov.gapMin}m</span>`:'');
+          cell.addEventListener('contextmenu',onCellContext);
+        }
+        rowA.appendChild(cell);
+      });
+      body.appendChild(rowA);
+    });
+  });
+  hookAgentLinks();
+}
+
+// ===== Agents panel, search & modal =====
+function renderAgents(){
+  const site=byId('site').value, list=siteAgents(site), days=spanDays(CUR_Y,CUR_M-1);
+  const root=byId('agents'); root.innerHTML='';
+  list.forEach(a=>{
+    let monthH=0, monthJ=0, weekH=0, weekJ=0;
+    const today=new Date(); const inMonth=(today.getFullYear()===CUR_Y && today.getMonth()===CUR_M-1);
+    const refStart = inMonth? mondayStart(today) : mondayStart(new Date(CUR_Y, CUR_M-1, 15));
+    const refEnd = mondayEnd(refStart);
+    (ROWS[site]||[]).forEach(r=>{
+      days.forEach(d=>{
+        const key=`${site}|${r.id}|${fmt(d)}`; if(PLAN[key]!==a.id) return;
+        const ov=OVERRIDE[key]||{}; const st=ov.start||r.start; const en=ov.end||r.end;
+        if(a.contractType==='forfait_jour'){ monthJ+=1; if(d>=refStart&&d<=refEnd) weekJ+=1; }
+        else { const h=spanMin(toMin(st),toMin(en))/60; monthH+=h; if(d>=refStart&&d<=refEnd) weekH+=h; }
+      });
+    });
+    const card=document.createElement('div'); card.className='agent';
+    const name=document.createElement('div'); name.className='name'; name.textContent=`${a.last.toUpperCase()} ${a.first} • ${a.mat}`;
+    name.onclick=()=>openAgentModal(a);
+    name.draggable=true; name.addEventListener('dragstart',()=>{window._dragAgent=a;}); name.addEventListener('dragend',()=>{window._dragAgent=null;});
+    const meta=document.createElement('div'); meta.className='meta';
+    meta.textContent=(a.contractType==='forfait_jour')?`Mensuel: ${monthJ} j / ${a.contractDays} • Hebdo: ${weekJ} j`:`Mensuel: ${monthH.toFixed(2)} h / ${(a.contractHours*4).toFixed(0)} • Hebdo: ${weekH.toFixed(2)} h`;
+    card.appendChild(name); card.appendChild(meta); root.appendChild(card);
+  });
+}
+function mondayStart(d){ const x=new Date(d); const day=x.getDay(); const diff=(day===1?0:(day===0?-6:1-day)); x.setDate(x.getDate()+diff); x.setHours(0,0,0,0); return x; }
+function mondayEnd(d){ const s=mondayStart(d); const e=new Date(s); e.setDate(e.getDate()+6); e.setHours(23,59,59,999); return e; }
+
+function hookAgentLinks(){ document.querySelectorAll('.agent-link').forEach(el=>{ el.onclick=()=>{ const id=el.dataset.id; const a=AGENTS.find(x=>x.id===id); if(a) openAgentModal(a); }; }); }
+function openAgentGlobal(){ const q=byId('searchAgent').value.trim().toLowerCase(); if(!q) return alert('Saisir matricule ou nom.'); const hits=AGENTS.filter(a=> (a.mat||'').toLowerCase().includes(q) || (a.last||'').toLowerCase().includes(q) || (a.first||'').toLowerCase().includes(q)); if(!hits.length) return alert('Aucun agent.'); openAgentModal(hits[0]); }
+byId('openAgentGlobal').onclick=openAgentGlobal;
+
+// Modal with tabs: site vs multi-sites
+let _modalAgent=null;
+byId('tabSite').onclick=()=> renderAgentModal(_modalAgent, 'site');
+byId('tabMulti').onclick=()=> renderAgentModal(_modalAgent, 'multi');
+function setActiveTab(mode){ byId('tabSite').classList.toggle('active', mode==='site'); byId('tabMulti').classList.toggle('active', mode==='multi'); }
+function openAgentModal(agent){ _modalAgent=agent; renderAgentModal(agent, 'site'); byId('agentModal').style.display='flex'; }
+byId('closeModal').onclick=()=> byId('agentModal').style.display='none';
+window.addEventListener('keydown',e=>{ if(e.key==='Escape') byId('agentModal').style.display='none'; });
+
+function renderAgentModal(agent, mode){
+  const monthLabel=new Date(CUR_Y,CUR_M-1,1).toLocaleString('fr-FR',{month:'long',year:'numeric'});
+  byId('agentTitle').textContent=`${agent.last.toUpperCase()} ${agent.first} • ${agent.mat} — ${monthLabel} ${mode==='multi'?'(tous sites)':''}`;
+  setActiveTab(mode);
+  const grid=byId('agentCal'); grid.innerHTML='';
+  const days=spanDays(CUR_Y,CUR_M-1);
+  // header
+  grid.appendChild(Object.assign(document.createElement('div'),{textContent:(mode==='site'?'Profil (site courant)':'Site · Profil')}));
+  days.forEach(d=>grid.appendChild(Object.assign(document.createElement('div'),{textContent:d.getDate()})));
+  // rows
+  const sitesToScan = (mode==='site') ? [byId('site').value] : SITES.filter(s=>s.agencyId===agent.agencyId).map(s=>s.id);
+  let any=false;
+  sitesToScan.forEach(sid=>{
+    (ROWS[sid]||[]).forEach(r=>{
+      // has content?
+      let has=false; for(const d of days){ if(PLAN[`${sid}|${r.id}|${fmt(d)}`]===agent.id){ has=true; break; } }
+      if(!has && mode==='multi') return; // in multi view, show only filled rows
+      any=true;
+      const rowLabel=(mode==='site')? `${r.profil} ${r.start}-${r.end}` : `${SITES.find(x=>x.id===sid).name} · ${r.profil} ${r.start}-${r.end}`;
+      grid.appendChild(Object.assign(document.createElement('div'),{textContent:rowLabel}));
+      days.forEach(d=>{
+        const key=`${sid}|${r.id}|${fmt(d)}`;
+        const cell=document.createElement('div');
+        if(PLAN[key]===agent.id){
+          const ov=OVERRIDE[key]||{}; const st=ov.start||r.start; const en=ov.end||r.end;
+          cell.innerHTML=`<div class="pill ${r.color}"><div>${st}</div><div>${en}</div></div>`;
+        }
+        grid.appendChild(cell);
+      });
+    });
+  });
+  if(!any){
+    const info=document.createElement('div'); info.style.gridColumn='1 / -1'; info.style.padding='8px'; info.textContent='Aucune vacation sur la période dans ce mode.'; grid.appendChild(info);
+  }
+}
+
+// ===== Export CSV/XLSX =====
+function exportCSV(){
+  const site=byId('site').value, days=spanDays(CUR_Y,CUR_M-1), rows=ROWS[site]||[];
+  const lines=[['Date','Jour','Site','Profil/Vacation','Agent','Matricule','Contrat','Horaire','Heures']];
+  rows.forEach(r=>{
+    days.forEach(d=>{
+      const key=`${site}|${r.id}|${fmt(d)}`; const aid=PLAN[key]; if(!aid) return;
+      const a=AGENTS.find(x=>x.id===aid); const ov=OVERRIDE[key]||{}; const st=ov.start||r.start; const en=ov.end||r.end;
+      const mins=spanMin(toMin(st),toMin(en)); const hrs=(mins/60).toFixed(2);
+      const jour=['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'][d.getDay()];
+      lines.push([fmt(d),jour,SITES.find(s=>s.id===site).name,`${r.profil} ${r.start}-${r.end}`,`${a.last.toUpperCase()} ${a.first}`,a.mat,(a.contractType==='forfait_jour'?'FORFAIT_JOUR':'HEURES'),`${st}-${en}`,hrs]);
+    });
+  });
+  const csv=lines.map(l=>l.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(';')).join('\r\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'}); const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download=`CRONOS_prepaie_${CUR_Y}-${String(CUR_M).padStart(2,'0')}_${SITES.find(s=>s.id===site).name.replace(/\s+/g,'_')}.csv`; a.click(); URL.revokeObjectURL(url);
+}
+byId('btnExportCSV').onclick=exportCSV;
+
+function exportXLSX(){
+  if(typeof XLSX==='undefined'){ alert('Lib XLSX absente : export en CSV lancé.'); exportCSV(); return; }
+  // Build rows similar to v9e10
+  const site=byId('site').value, days=spanDays(CUR_Y,CUR_M-1), rows=ROWS[site]||[]; const jf=new Set(parseJF());
+  const out=[];
+  rows.forEach(r=>{
+    days.forEach(d=>{
+      const key=`${site}|${r.id}|${fmt(d)}`; const aid=PLAN[key]; if(!aid) return;
+      const a=AGENTS.find(x=>x.id===aid); const ov=OVERRIDE[key]||{}; const st=ov.start||r.start; const en=ov.end||r.end;
+      const mins=spanMin(toMin(st),toMin(en)); const hrs=(mins/60);
+      const isDim=(d.getDay()===0), isJF=jf.has(fmt(d)), isNuit=night(st,en);
+      const maj_nuit = isNuit? hrs*0.25 : 0, maj_dim=isDim? hrs*0.50:0, maj_jf=isJF? hrs*1.00:0;
+      out.push([fmt(d), ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'][d.getDay()], SITES.find(s=>s.id===site).name, `${r.profil} ${r.start}-${r.end}`, `${a.last.toUpperCase()} ${a.first}`, a.mat, (a.contractType==='forfait_jour'?'FORFAIT_JOUR':'HEURES'), `${st}-${en}`, hrs, isNuit, isDim, isJF, maj_nuit, maj_dim, maj_jf, maj_nuit+maj_dim+maj_jf, hrs + maj_nuit + maj_dim + maj_jf, (a.contractType==='forfait_jour') ? (isJF?2:1) : 0 ]);
+    });
+  });
+  const hdr=["Date","Jour","Site","Profil_Vacation","Agent","Matricule","Contrat","Horaire","Heures_base","Nuit","Dimanche","JF","Maj_nuit_h","Maj_dim_h","Maj_jf_h","Maj_total_h","Heures_payees","Jour_forfait_compte"];
+  const ws=XLSX.utils.aoa_to_sheet([hdr, ...out]); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Lignes');
+  // Totaux
+  const map=new Map();
+  out.forEach(r=>{
+    const key=r[4]+'|'+r[5]+'|'+r[6];
+    const o=map.get(key)||[r[4],r[5],r[6],0,0,0,0,0,0];
+    o[3]+=r[8]; o[4]+=r[12]; o[5]+=r[13]; o[6]+=r[14]; o[7]+=r[15]; o[8]+=r[16];
+    map.set(key,o);
+  });
+  const hdr2=["Agent","Matricule","Contrat","Heures_base","Maj_nuit_h","Maj_dim_h","Maj_jf_h","Maj_total_h","Heures_payees"];
+  const ws2=XLSX.utils.aoa_to_sheet([hdr2, ...Array.from(map.values())]);
+  XLSX.utils.book_append_sheet(wb, ws2, 'Totaux_agents');
+  XLSX.writeFile(wb, `CRONOS_PREPAIE_${document.getElementById('monthSel').value}_${SITES.find(s=>s.id===document.getElementById('site').value).name.replace(/\s+/g,'_')}.xlsx`);
+}
+byId('btnExportXLSX').onclick=exportXLSX;
+
+// ===== Wiring =====
+function fillAgencies(){ byId('agency').innerHTML=AGENCIES.map(a=>`<option value="${a.id}">${a.name}</option>`).join(''); }
+function fillSites(){ const ag=byId('agency').value; const s=SITES.filter(x=>x.agencyId===ag); byId('site').innerHTML=s.map(x=>`<option value="${x.id}">${x.name}</option>`).join(''); }
+function drawAll(){ drawHead(); drawBody(); renderRecap(); renderAgents(); }
+function init(){
+  fillAgencies(); fillSites();
+  byId('agency').onchange=()=>{ fillSites(); drawAll(); };
+  byId('site').onchange=drawAll;
+  const now=new Date(); CUR_Y=Math.max(2025, now.getFullYear()); CUR_M=now.getMonth()+1; fillMonthSelect();
+  byId('btnParams').onclick=()=>{ const cur=byId('holidays').value||''; const v=prompt('Jours fériés (AAAA-MM-JJ, séparés par des virgules):',cur); if(v!==null) byId('holidays').value=v; };
+  byId('btnExportCSV').onclick=exportCSV;
+  drawAll();
+}
+init();
 </script>
-</body></html>
+</body>
+</html>
